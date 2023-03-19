@@ -97,41 +97,14 @@ def pb_file_to_concrete_function(pb_file, inputs, outputs, print_graph=False):
                                         outputs=outputs,
                                         print_graph=print_graph)
         return graph_def, frozen_func
+    
 
-
-class OnnxEncoder(object):
-    """
-    为了加速线上推理，离线生产的tf/keras/pytorch版本的bert模型，均可以通过此方法加载
-    需要提前约定好输入list、输出list、词典、maxlen
-    """
-
-    def __init__(self, pb_model_file, preprocessor=None, input_variable_names=None, output_variable_names=None, max_cache_len=5000):
-        """
-        加载onnx存储的pb模型文件，并且封装encoder方法
-        :param pb_model_file: tvm优化后的bert模型so库
-        :param preprocessor: 数据预处理器，比如文本场景下的tokenizer
-        :return: cls
-        """
-        input_variable_list = input_variable_names or [f'x{i}:0' for i in range(2)]
-        output_variable_list = output_variable_names or [f'y{i}:0' for i in range(1)]
-        graph, onnx_model = pb_file_to_concrete_function(pb_model_file, input_variable_list, output_variable_list)
-        self.preprocessor = preprocessor
-        self.onnx_model = onnx_model
-        self.graph = graph
-        self.lru_encode = self.__inti_lru_encoder(max_cache_len)
-
-    def __inti_lru_encoder(self, max_cache_len):
-        """用一条样本激活lru_encoder，因为lru_encoder第一条encode非常慢，构建好缓存后速度恢复正常
-        """
-        @lru_cache(max_cache_len, typed=False)
-        def lru_encode_(text):
-            return self.encode(text)
-        lru_encode_("欢迎使用ONNX Encoder")
-        return lru_encode_
-
-    def __token_encode__(self, text):
-        res = self.preprocessor(text)
-        return [tf.cast([i], tf.float32) for i in res]
-
-    def encode(self, text):
-        return self.onnx_model(self.__token_encode__(text))
+if __name__ == "__main__":
+    # tf模型在转换onnx模型前需要先用tf.keras.Model包一层
+    ind_input, seg_input = tf.keras.layers.Input([max_len]),  tf.keras.layers.Input([max_len])
+    your_keras_model = tf.keras.Model(inputs=[ind_input, seg_input], outputs=model([ind_input, seg_input]))
+    # 保存onnx静态模型
+    _, input_vaiable_list, ouput_vaiable_list = freeze_keras_model2pb(your_keras_model, "your_keras_model.pb")
+    # 导入onnx静态模型
+    graph, model_onnx = pbfile2concrete_function("your_keras_model.pb", ['x0:0', 'x1:0'], ['y0:0'])
+    # 开心的使用model_onnx吧
