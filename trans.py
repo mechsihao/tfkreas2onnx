@@ -103,9 +103,9 @@ if __name__ == "__main__":
     # 需要事先安装tf2onnx
     # tf模型在转换onnx模型前需要先用tf.keras.Model包一层
     ind_input, seg_input = tf.keras.layers.Input([max_len]),  tf.keras.layers.Input([max_len])
-    your_keras_model = tf.keras.Model(inputs=[ind_input, seg_input], outputs=model([ind_input, seg_input]))
-    # 保存onnx静态模型
-    _, input_vaiable_list, ouput_vaiable_list = freeze_keras_model2pb(your_keras_model, "your_keras_model.pb")
-    # 导入onnx静态模型
-    graph, model_onnx = pbfile2concrete_function("your_keras_model.pb", input_vaiable_list, ouput_vaiable_list)
-    # 开心的使用model_onnx吧
+    new_keras_model = tf.keras.Model(inputs=[ind_input, seg_input], outputs=your_keras_model([ind_input, seg_input]))
+    # 保存onnx静态模型，方便其他地方使用
+    _, input_vaiable_list, ouput_vaiable_list = freeze_keras_model2pb(new_keras_model, "new_keras_model.pb")
+    # 使用方法，导入onnx静态模型
+    graph, model_onnx = pbfile2concrete_function("new_keras_model.pb", input_vaiable_list, ouput_vaiable_list)
+    # 现在你可以开心的使用model_onnx了
