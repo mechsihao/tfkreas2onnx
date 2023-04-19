@@ -47,6 +47,7 @@ def pb_file_to_concrete_function(pb_file, inputs, outputs, print_graph=False):
 
 
 class BertFreezeEncoder(object):
+
     def __init__(self,
                  pb_model_file: str,
                  vocab_path: str,
@@ -86,12 +87,8 @@ class BertFreezeEncoder(object):
     def encode(self, text: str, verbose=True):
         """单文本embedding
         """
-        start = time.time()
         token, segment = self.__token_encode__(text)
         vec = self.onnx_model_(token, segment)[0].numpy()
-        start_vw = time.time()
-        if verbose:
-            print(f"Bert encode cost: {start_vw - start:.8f}s")
         return vec
 
     def batch_encode(self, texts: List[str], batch_size=1024, verbose=True):
