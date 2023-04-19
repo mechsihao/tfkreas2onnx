@@ -17,7 +17,7 @@
     ```
     - 加载保存模型方法，见bert_onnx_encoder.py
 
-## 3.将tf/keras参数冻结，tf加载静态图推理
+## 2.将tf/keras参数冻结，tf加载静态图推理
 这里用到的bert是苏剑林开源的roberta small，框架用的也是苏神的bert4keras，需要事先安装：
 ```shell
 pip install bert4keras==0.10.8
