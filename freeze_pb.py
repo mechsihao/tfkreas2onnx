@@ -1,6 +1,10 @@
 import os
 
 import tensorflow as tf
+from tensorflow.keras import layers, models
+from bert4keras.models import build_transformer_model
+from bert4keras.tokenizers import Tokenizer
+
 from tensorflow.python.framework import importer
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
@@ -61,5 +65,22 @@ def freeze_keras_model2pb(keras_model, pb_filepath, input_variable_name_list=Non
 
 
 if __name__ == "__main__":
-    
+    max_len = 16
+    model_name = "roberta"
+
+    conf = f"{model_name}/small/bert_config.json"
+    ckpt = f"{model_name}/small/bert_model.ckpt"
+    vocab = f"{model_name}/small/vocab.txt"
+
+    tokenizer = Tokenizer(vocab, do_lower_case=True)
+
+    base = build_transformer_model(conf, ckpt)
+    output = layers.Lambda(lambda tensor: tensor[:, 0], name='bert_encoder')(base.output)
+    model = models.Model(base.inputs, output)
+
+    ind_input, seg_input = tf.keras.layers.Input([max_len]), tf.keras.layers.Input([max_len])
+    model_new = tf.keras.Model(inputs=[ind_input, seg_input], outputs=model([ind_input, seg_input]))
+
+    # 存储pb文件，方便下次使用，
+    # 这里的input_vaiable_list, ouput_vaiable_list也在调用模型的时候需要用到
     _, input_vaiable_list, ouput_vaiable_list = freeze_keras_model2pb(model_new, "roberta.pb")
